@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp) // 1. 添加这一行
 }
 
 android {
@@ -57,4 +58,12 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // 2. 这里的 ksp 现在应该能被正确识别了
+    // 如果仍然报红，请使用 "ksp" (带引号) 这种写法
+    ksp("androidx.room:room-compiler:$room_version")
 }
