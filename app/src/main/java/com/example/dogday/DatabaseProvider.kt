@@ -13,7 +13,6 @@ object DatabaseProvider {
     private var instance: AppDatabase? = null
 
     fun getDatabase(context: Context): AppDatabase {
-        // 如果实例已经存在，直接返回；不存在则创建
         return instance ?: synchronized(this) {
             val db = Room.databaseBuilder(
                 context.applicationContext,
@@ -22,11 +21,11 @@ object DatabaseProvider {
             ).addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
-                    // 只有在数据库第一次被创建时，插入初始标签
+                    // 第一次创建数据库时插入默认标签
                     CoroutineScope(Dispatchers.IO).launch {
-                        val dao = getDatabase(context).dogDayDao()
-                        dao.insertTag(Tag(name = "洗澡", colorHex = "#4A90E2", order = 1))
-                        dao.insertTag(Tag(name = "驱虫", colorHex = "#7ED321", order = 2))
+                        val dao = getDatabase(context).dogDao()
+                        dao.insertTag(Tag(name = "洗澡", color = 0xFF4A90E2.toInt(), orderIndex = 1))
+                        dao.insertTag(Tag(name = "驱虫", color = 0xFF7ED321.toInt(), orderIndex = 2))
                     }
                 }
             }).build()
