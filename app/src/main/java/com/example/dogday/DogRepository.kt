@@ -12,4 +12,6 @@ class DogRepository(private val dogDao: DogDao) {
     suspend fun deleteLog(log: DogLog) = dogDao.deleteLog(log)
 
     suspend fun insertTag(tag: Tag) = dogDao.insertTag(tag)
+
+    suspend fun deleteTag(tag: Tag) = dogDao.deleteTag(tag) // 补充这一行
 }

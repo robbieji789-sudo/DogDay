@@ -40,4 +40,19 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
     fun onDateSelected(date: String) {
         _selectedDate.value = date
     }
+    // 这里的 repository.insertTag 已经在你代码中了
+    fun addTag(name: String, color: Int) {
+        viewModelScope.launch {
+            // 这里的 orderIndex 暂时用时间戳简单代替，保证排序
+            val newTag = Tag(name = name, color = color, orderIndex = (System.currentTimeMillis() / 1000).toInt())
+            repository.insertTag(newTag)
+        }
+    }
+
+    fun deleteTag(tag: Tag) {
+        viewModelScope.launch {
+            // 注意：实际开发中删除标签通常要考虑级联删除已完成的任务，目前我们先做简单的删除
+            repository.deleteTag(tag)
+        }
+    }
 }

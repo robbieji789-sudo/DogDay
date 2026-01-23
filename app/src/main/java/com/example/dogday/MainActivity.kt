@@ -9,11 +9,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -105,9 +107,12 @@ fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
     // 观察 ViewModel 中的标签列表
     val tags by viewModel.tags.collectAsState(initial = emptyList())
 
+    // 控制弹窗显示的变量
+    var showDialog by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.padding(16.dp)) {
         Text(
-            text = "任务标签 (双击添加)",
+            text = "任务标签 (双击添加，长按删除)",
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 12.dp)
         )
@@ -123,7 +128,8 @@ fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
                     modifier = Modifier
                         .combinedClickable(
                             onClick = { /* 单击可以选择日期，此处暂不处理 */ },
-                            onDoubleClick = { viewModel.addLog(tag.id) } // 双击触发存入数据库
+                            onDoubleClick = { viewModel.addLog(tag.id) }, // 双击触发存入数据库
+                            onLongClick = { viewModel.deleteTag(tag) } // 新增：长按删除
                         ),
                     color = Color(tag.color.toLong() and 0xffffffffL), // 使用数据库存的颜色值
                     shape = MaterialTheme.shapes.medium
@@ -137,13 +143,20 @@ fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
             }
 
             // 添加按钮
-            OutlinedButton(
-                onClick = { /* TODO: 弹出对话框输入新标签名 */ },
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
+            OutlinedButton(onClick = { showDialog = true }) {
                 Text("+ 自定义", fontSize = 12.sp)
             }
         }
+    }
+    // 如果状态为 true，显示弹窗
+    if (showDialog) {
+        AddTagDialog(
+            onDismiss = { showDialog = false },
+            onConfirm = { name, color ->
+                viewModel.addTag(name, color)
+                showDialog = false
+            }
+        )
     }
 }
 
@@ -182,4 +195,68 @@ fun DoneListSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
             }
         }
     }
+}
+
+@Composable
+fun AddTagDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Int) -> Unit
+) {
+    var tagName by remember { mutableStateOf("") }
+    // 默认选择调色盘中的第一个颜色
+    var selectedColorIndex by remember { mutableIntStateOf(0) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("新建任务标签") },
+        text = {
+            Column {
+                TextField(
+                    value = tagName,
+                    onValueChange = { tagName = it },
+                    label = { Text("标签名称（如：遛狗）") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("选择颜色：", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                // 颜色选择器：展示我们预设的 10 种颜色
+                FlowRow(
+                    modifier = Modifier.padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.example.dogday.ui.theme.TagColorPalette.forEachIndexed { index, color ->
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(color, shape = CircleShape)
+                                .combinedClickable(
+                                    onClick = { selectedColorIndex = index }
+                                )
+                                .padding(4.dp)
+                        ) {
+                            if (selectedColorIndex == index) {
+                                // 选中的颜色加一个白点标记
+                                Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.5f), CircleShape))
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (tagName.isNotBlank()) {
+                        val colorInt = com.example.dogday.ui.theme.TagColorPalette[selectedColorIndex].toArgb()
+                        onConfirm(tagName, colorInt)
+                    }
+                }
+            ) { Text("保存") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        }
+    )
 }
