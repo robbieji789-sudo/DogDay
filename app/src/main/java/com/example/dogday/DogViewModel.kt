@@ -20,7 +20,7 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
     fun getLogsForSelectedDate(date: String) = repository.getLogsForDate(date)
 
     // 执行添加记录的操作（对应你的双击动作）
-    fun addLog(tagId: Int) {
+    fun addLog(tagId: Long) {
         viewModelScope.launch {
             val newLog = DogLog(
                 tagId = tagId,

@@ -104,11 +104,12 @@ fun TopHeader() {
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
-    // 观察 ViewModel 中的标签列表
     val tags by viewModel.tags.collectAsState(initial = emptyList())
-
-    // 控制弹窗显示的变量
     var showDialog by remember { mutableStateOf(false) }
+
+    // --- 新增：用于删除确认弹窗的状态 ---
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var tagToDelete by remember { mutableStateOf<Tag?>(null) }
 
     Column(modifier = modifier.padding(16.dp)) {
         Text(
@@ -129,7 +130,9 @@ fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
                         .combinedClickable(
                             onClick = { /* 单击可以选择日期，此处暂不处理 */ },
                             onDoubleClick = { viewModel.addLog(tag.id) }, // 双击触发存入数据库
-                            onLongClick = { viewModel.deleteTag(tag) } // 新增：长按删除
+                            onLongClick = {                                 // 修改这里：记录要删除哪个，并打开弹窗
+                                tagToDelete = tag
+                                showDeleteDialog = true  } // 长按删除
                         ),
                     color = Color(tag.color.toLong() and 0xffffffffL), // 使用数据库存的颜色值
                     shape = MaterialTheme.shapes.medium
@@ -155,6 +158,27 @@ fun TagSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
             onConfirm = { name, color ->
                 viewModel.addTag(name, color)
                 showDialog = false
+            }
+        )
+    }
+
+    if (showDeleteDialog && tagToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("确认删除标签？") },
+            text = { Text("删除标签“${tagToDelete?.name}”将同时清除所有关联的狗狗活动记录，此操作无法撤销。") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red), // 警告色
+                    onClick = {
+                        tagToDelete?.let { viewModel.deleteTag(it) }
+                        showDeleteDialog = false
+                        tagToDelete = null
+                    }
+                ) { Text("确认删除", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("取消") }
             }
         )
     }

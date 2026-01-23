@@ -2,11 +2,22 @@ package com.example.dogday
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ForeignKey // 必须导入这个
 
-@Entity(tableName = "logs")
+@Entity(
+    tableName = "logs",
+    foreignKeys = [
+        ForeignKey(
+            entity = Tag::class,           // 关联的父表是 Tag
+            parentColumns = ["id"],        // Tag 表中对应的列是 id
+            childColumns = ["tagId"],      // DogLog 表中对应的列是 tagId
+            onDelete = ForeignKey.CASCADE  // 关键：开启级联删除
+        )
+    ]
+)
 data class DogLog(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val tagId: Int, // 对应 Tag 的 id
-    val date: String, // 存储格式如 "2026-01-23"
-    val timestamp: Long // 存储精确的双击时间戳
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val tagId: Long,
+    val date: String,
+    val timestamp: Long = System.currentTimeMillis()
 )
