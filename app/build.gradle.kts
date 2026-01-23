@@ -31,6 +31,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -66,4 +67,6 @@ dependencies {
     // 2. 这里的 ksp 现在应该能被正确识别了
     // 如果仍然报红，请使用 "ksp" (带引号) 这种写法
     ksp("androidx.room:room-compiler:$room_version")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
