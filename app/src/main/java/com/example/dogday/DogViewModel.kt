@@ -3,9 +3,13 @@ package com.example.dogday
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 
 class DogViewModel(private val repository: DogRepository) : ViewModel() {
 
@@ -40,6 +44,9 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
     fun onDateSelected(date: String) {
         _selectedDate.value = date
     }
+
+
+
     // 这里的 repository.insertTag 已经在你代码中了
     fun addTag(name: String, color: Int) {
         viewModelScope.launch {
@@ -54,5 +61,19 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
             // 注意：实际开发中删除标签通常要考虑级联删除已完成的任务，目前我们先做简单的删除
             repository.deleteTag(tag)
         }
+    }
+
+    // 当前选中的月份
+    private val _currentMonth = MutableStateFlow(YearMonth.now())
+    val currentMonth: StateFlow<YearMonth> = _currentMonth
+
+    // 核心：使用 combine 或 map，当月份变化时，自动重新计算 42 个日期
+    val calendarDays: StateFlow<List<LocalDate>> = _currentMonth
+        .map { month -> CalendarHelper.getDaysInMonthPage(month) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // 切换月份的方法
+    fun onMonthChange(newMonth: YearMonth) {
+        _currentMonth.value = newMonth
     }
 }

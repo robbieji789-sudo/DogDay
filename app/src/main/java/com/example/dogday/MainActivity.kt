@@ -49,20 +49,57 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//@Composable
+//fun DogDayMainScreen(viewModel: DogViewModel) {
+//    Column(modifier = Modifier.fillMaxSize()) {
+//        TopHeader()
+//
+//        // --- 上：日历界面 (暂存占位) ---
+//        Box(
+//            modifier = Modifier
+//                .weight(1.2f)
+//                .fillMaxWidth()
+//                .background(Color(0xFFF5F5F5)),
+//            contentAlignment = Alignment.Center
+//        ) {
+//            Text("📅 日历月视图预留\n(后续集成装饰器)", fontSize = 16.sp, color = Color.Gray)
+//        }
+//
+//        // --- 中：任务标签页 ---
+//        TagSection(
+//            modifier = Modifier.weight(0.9f),
+//            viewModel = viewModel
+//        )
+//
+//        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
+//
+//        // --- 下：今日已完成 ---
+//        DoneListSection(
+//            modifier = Modifier.weight(1.1f),
+//            viewModel = viewModel
+//        )
+//    }
+//}
+
 @Composable
 fun DogDayMainScreen(viewModel: DogViewModel) {
     Column(modifier = Modifier.fillMaxSize()) {
+        // 顶部标题（显示年份月份，例如：2026年1月）
+        val currentMonth by viewModel.currentMonth.collectAsState()
+
+        // 假设你的 TopHeader 已经包含了标题，
+        // 或者你可以简单传参给它来动态显示当前月份
         TopHeader()
 
-        // --- 上：日历界面 (暂存占位) ---
+        // --- 上：日历界面 (正式集成) ---
+        // 我们给日历分配约 1.3f 的权重，确保 42 个格子有足够的垂直空间
         Box(
             modifier = Modifier
-                .weight(1.2f)
+                .weight(1.5f)
                 .fillMaxWidth()
-                .background(Color(0xFFF5F5F5)),
-            contentAlignment = Alignment.Center
+//                .padding(vertical = 8.dp)
         ) {
-            Text("📅 日历月视图预留\n(后续集成装饰器)", fontSize = 16.sp, color = Color.Gray)
+            CalendarMonthGrid(viewModel = viewModel)
         }
 
         // --- 中：任务标签页 ---
@@ -75,7 +112,7 @@ fun DogDayMainScreen(viewModel: DogViewModel) {
 
         // --- 下：今日已完成 ---
         DoneListSection(
-            modifier = Modifier.weight(1.1f),
+            modifier = Modifier.weight(1.0f),
             viewModel = viewModel
         )
     }
