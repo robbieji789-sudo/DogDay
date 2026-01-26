@@ -49,38 +49,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//@Composable
-//fun DogDayMainScreen(viewModel: DogViewModel) {
-//    Column(modifier = Modifier.fillMaxSize()) {
-//        TopHeader()
-//
-//        // --- 上：日历界面 (暂存占位) ---
-//        Box(
-//            modifier = Modifier
-//                .weight(1.2f)
-//                .fillMaxWidth()
-//                .background(Color(0xFFF5F5F5)),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            Text("📅 日历月视图预留\n(后续集成装饰器)", fontSize = 16.sp, color = Color.Gray)
-//        }
-//
-//        // --- 中：任务标签页 ---
-//        TagSection(
-//            modifier = Modifier.weight(0.9f),
-//            viewModel = viewModel
-//        )
-//
-//        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
-//
-//        // --- 下：今日已完成 ---
-//        DoneListSection(
-//            modifier = Modifier.weight(1.1f),
-//            viewModel = viewModel
-//        )
-//    }
-//}
-
 @Composable
 fun DogDayMainScreen(viewModel: DogViewModel) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -95,12 +63,19 @@ fun DogDayMainScreen(viewModel: DogViewModel) {
         // 我们给日历分配约 1.3f 的权重，确保 42 个格子有足够的垂直空间
         Box(
             modifier = Modifier
-                .weight(1.5f)
+                .weight(2.4f)
                 .fillMaxWidth()
 //                .padding(vertical = 8.dp)
         ) {
             CalendarMonthGrid(viewModel = viewModel)
         }
+
+        // --- 在这里插入分隔线 ---
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp), // 左右留点边距更好看
+            thickness = 1.dp,                               // 线条粗细
+            color = Color.LightGray.copy(alpha = 0.5f)      // 线条颜色，设置半透明显得高级
+        )
 
         // --- 中：任务标签页 ---
         TagSection(
@@ -108,7 +83,12 @@ fun DogDayMainScreen(viewModel: DogViewModel) {
             viewModel = viewModel
         )
 
-        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
+        // --- 在这里插入分隔线 ---
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp), // 左右留点边距更好看
+            thickness = 1.dp,                               // 线条粗细
+            color = Color.LightGray.copy(alpha = 0.5f)      // 线条颜色，设置半透明显得高级
+        )
 
         // --- 下：今日已完成 ---
         DoneListSection(
