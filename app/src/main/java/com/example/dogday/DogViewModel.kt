@@ -93,4 +93,8 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
     val calendarDays: StateFlow<List<LocalDate>> = _currentMonth
         .map { month -> CalendarHelper.getDaysInMonthPage(month) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun onDateClick(date: java.time.LocalDate) {
+        _selectedDate.value = date.toString()
+    }
 }
