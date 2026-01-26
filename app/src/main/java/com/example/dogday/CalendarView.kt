@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -101,18 +102,21 @@ fun CalendarDayItem(
     onDateClick: (java.time.LocalDate) -> Unit // 新增参数：点击回调
 ) {
     Box(
-        modifier = Modifier // 必须从 Modifier 开始
-            .clickable { onDateClick(date) } // 然后接 .clickable
+        modifier = Modifier
             .aspectRatio(1f)
             .padding(4.dp)
+            // 1. 先设置裁剪形状，这样水波纹也会被限制在圆圈内
+            .clip(androidx.compose.foundation.shape.CircleShape)
+            // 2. 设置背景
             .background(
                 color = when {
                     isSelected -> Color(0xFF6200EE)
-                    date == java.time.LocalDate.now() -> Color(0xFFFFE082)
+                    date == LocalDate.now() -> Color(0xFFFFE082)
                     else -> Color.Transparent
-                },
-                shape = androidx.compose.foundation.shape.CircleShape
-            ),
+                }
+            )
+            // 3. 最后设置 clickable，这样水波纹会涂在最上层
+            .clickable { onDateClick(date) },
         contentAlignment = Alignment.Center
     ) {
         Text(
