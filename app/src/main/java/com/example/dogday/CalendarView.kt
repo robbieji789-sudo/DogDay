@@ -1,14 +1,15 @@
 package com.example.dogday
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // <--- 就是这一行！
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape // <--- 确保也有这个，用于画圆
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -26,41 +27,45 @@ import java.time.LocalDate
 fun CalendarMonthGrid(viewModel: DogViewModel) {
     val pagerState = rememberPagerState(initialPage = viewModel.initialPage, pageCount = { 1000 })
     val currentMonth by viewModel.currentMonth.collectAsState()
-
-    // --- 关键修改 1: 获取当前选中的日期状态 ---
-    // selectedDate 在 ViewModel 里是 String 类型 (如 "2026-03-31")
     val selectedDateStr by viewModel.selectedDate.collectAsState()
-
     val markings by viewModel.calendarMarkings.collectAsState()
 
-    // 监听滑动，更新标题
     LaunchedEffect(pagerState.currentPage) {
         viewModel.onMonthChange(viewModel.getYearMonthForPage(pagerState.currentPage))
     }
 
     Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-        // 1. 年份月份标题
+        // 1. 年份月份标题 - 这里的文字稍微大一点，不用背景，直接浮在大背景上
         Text(
             text = "${currentMonth.year}年${currentMonth.monthValue}月",
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            color = Color(0xFF6200EE), // 使用深紫色文字
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black)
         )
 
         // 2. 星期表头
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-            listOf("一", "二", "三", "四", "五", "六", "日").forEach {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(4.dp)) // 增加浅灰色底色
+                .padding(vertical = 8.dp)
+        ) {
+            listOf("一", "二", "三", "四", "五", "六", "日").forEachIndexed { index, weekDay ->
                 Text(
-                    text = it,
+                    text = weekDay,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodySmall
+                    // 周六周日可以用不同的颜色突出
+                    color = if (index >= 5) Color(0xFF6200EE) else Color.DarkGray,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.ExtraBold, // 极粗字体
+                        fontSize = 14.sp
+                    )
                 )
             }
         }
 
-        // 3. 左右滑动容器
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth(),
@@ -69,7 +74,6 @@ fun CalendarMonthGrid(viewModel: DogViewModel) {
             val monthForPage = viewModel.getYearMonthForPage(page)
             val days = viewModel.getDaysInMonthPage(monthForPage)
 
-            // 4. 日期网格
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 modifier = Modifier.height(350.dp),
@@ -77,13 +81,13 @@ fun CalendarMonthGrid(viewModel: DogViewModel) {
             ) {
                 items(days) { date ->
                     val dateStr = date.toString()
-                    val dayColors = markings[dateStr] ?: emptyList() // 获取当天的颜色列表
+                    val dayColors = markings[dateStr] ?: emptyList()
 
                     CalendarDayItem(
                         date = date,
                         isCurrentMonth = date.month == monthForPage.month,
                         isSelected = date.toString() == selectedDateStr,
-                        taskColors = dayColors, // 将颜色列表传进去
+                        taskColors = dayColors,
                         onDateClick = { viewModel.onDateClick(it) }
                     )
                 }
@@ -97,17 +101,17 @@ fun CalendarDayItem(
     date: LocalDate,
     isCurrentMonth: Boolean,
     isSelected: Boolean,
-    taskColors: List<Int>, // 新增：这一天的任务颜色列表
+    taskColors: List<Int>,
     onDateClick: (LocalDate) -> Unit
 ) {
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(2.dp)
+            .padding(1.dp)
             .clip(CircleShape)
             .background(
                 color = when {
-                    isSelected -> Color(0xFF6200EE).copy(alpha = 0.15f) // 选中时浅色背景
+                    isSelected -> Color(0xFF6200EE).copy(alpha = 0.15f)
                     date == LocalDate.now() -> Color(0xFFFFE082).copy(alpha = 0.5f)
                     else -> Color.Transparent
                 }
@@ -115,7 +119,12 @@ fun CalendarDayItem(
             .clickable { onDateClick(date) },
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // 使用 SpaceEvenly 确保日期和圆点区域在垂直方向分布均匀，不拥挤
+            verticalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxSize().padding(vertical = 2.dp)
+        ) {
             // 1. 日期数字
             Text(
                 text = date.dayOfMonth.toString(),
@@ -124,42 +133,26 @@ fun CalendarDayItem(
                     isCurrentMonth -> Color.Black
                     else -> Color.LightGray
                 },
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
 
-            // 2. 下方的小圆圈或数字标记
-            if (taskColors.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.padding(top = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (taskColors.size <= 3) {
-                        // 任务 <= 3：显示所有圆圈
-                        taskColors.forEach { colorInt ->
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(Color(colorInt), shape = CircleShape)
-                            )
-                        }
-                    } else {
-                        // 任务 > 3：显示前 3 个 + 剩余数量
-                        taskColors.take(3).forEach { colorInt ->
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(Color(colorInt), shape = CircleShape)
-                            )
-                        }
-                        Text(
-                            text = "+${taskColors.size - 3}",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray
-                        )
-                    }
+            // 2. 标记区域：只显示前 3 个圆圈，不显示任何数字
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(10.dp), // 保持固定高度，防止日期跳动
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 使用 take(3) 获取前三个颜色，如果没有任务则不执行
+                taskColors.take(3).forEach { colorInt ->
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .size(5.dp)
+                            .background(Color(colorInt), shape = CircleShape)
+                    )
                 }
             }
         }

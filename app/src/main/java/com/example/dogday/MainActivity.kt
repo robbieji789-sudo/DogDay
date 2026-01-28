@@ -63,7 +63,7 @@ fun DogDayMainScreen(viewModel: DogViewModel) {
         // 我们给日历分配约 1.3f 的权重，确保 42 个格子有足够的垂直空间
         Box(
             modifier = Modifier
-                .weight(2.4f)
+                .weight(2.8f)
                 .fillMaxWidth()
 //                .padding(vertical = 8.dp)
         ) {
@@ -211,11 +211,40 @@ fun DoneListSection(modifier: Modifier = Modifier, viewModel: DogViewModel) {
     val tags by viewModel.tags.collectAsState(initial = emptyList())
 
     Column(modifier = modifier.padding(16.dp)) {
-        Text(
-            text = "今日已完成",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        // --- 修改这里的标题逻辑 ---
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "已完成列表",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color.Black
+            )
+
+            // 如果记录不为空，就在后面跟上数字
+            if (logs.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(8.dp)) // 留一点间距
+
+                // 数字提醒：使用半透明背景或特殊的圆角矩形包装，更显精致
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF6200EE).copy(alpha = 0.1f), // 淡淡的品牌色背景
+                            shape = CircleShape
+                        )
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = logs.size.toString(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6200EE) // 品牌紫色数字
+                        )
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn {
             items(logs) { log ->
