@@ -31,6 +31,8 @@ fun CalendarMonthGrid(viewModel: DogViewModel) {
     // selectedDate 在 ViewModel 里是 String 类型 (如 "2026-03-31")
     val selectedDateStr by viewModel.selectedDate.collectAsState()
 
+    val markings by viewModel.calendarMarkings.collectAsState()
+
     // 监听滑动，更新标题
     LaunchedEffect(pagerState.currentPage) {
         viewModel.onMonthChange(viewModel.getYearMonthForPage(pagerState.currentPage))
@@ -74,19 +76,15 @@ fun CalendarMonthGrid(viewModel: DogViewModel) {
                 userScrollEnabled = false
             ) {
                 items(days) { date ->
-                    // --- 关键修改 2: 判断当前日期是否被选中 ---
-                    // 将当前的 LocalDate 转为 String，与状态中的字符串对比
-                    val isSelected = date.toString() == selectedDateStr
+                    val dateStr = date.toString()
+                    val dayColors = markings[dateStr] ?: emptyList() // 获取当天的颜色列表
 
                     CalendarDayItem(
                         date = date,
                         isCurrentMonth = date.month == monthForPage.month,
-                        isSelected = isSelected, // 传递选中状态
-                        onDateClick = { clickedDate ->
-                            // --- 关键修改 3: 触发点击回调 ---
-                            // 调用我们之前在 ViewModel 里准备好的方法
-                            viewModel.onDateClick(clickedDate)
-                        }
+                        isSelected = date.toString() == selectedDateStr,
+                        taskColors = dayColors, // 将颜色列表传进去
+                        onDateClick = { viewModel.onDateClick(it) }
                     )
                 }
             }
@@ -96,38 +94,74 @@ fun CalendarMonthGrid(viewModel: DogViewModel) {
 
 @Composable
 fun CalendarDayItem(
-    date: java.time.LocalDate,
+    date: LocalDate,
     isCurrentMonth: Boolean,
-    isSelected: Boolean, // 新增参数：是否被选中
-    onDateClick: (java.time.LocalDate) -> Unit // 新增参数：点击回调
+    isSelected: Boolean,
+    taskColors: List<Int>, // 新增：这一天的任务颜色列表
+    onDateClick: (LocalDate) -> Unit
 ) {
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(4.dp)
-            // 1. 先设置裁剪形状，这样水波纹也会被限制在圆圈内
-            .clip(androidx.compose.foundation.shape.CircleShape)
-            // 2. 设置背景
+            .padding(2.dp)
+            .clip(CircleShape)
             .background(
                 color = when {
-                    isSelected -> Color(0xFF6200EE)
-                    date == LocalDate.now() -> Color(0xFFFFE082)
+                    isSelected -> Color(0xFF6200EE).copy(alpha = 0.15f) // 选中时浅色背景
+                    date == LocalDate.now() -> Color(0xFFFFE082).copy(alpha = 0.5f)
                     else -> Color.Transparent
                 }
             )
-            // 3. 最后设置 clickable，这样水波纹会涂在最上层
             .clickable { onDateClick(date) },
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = date.dayOfMonth.toString(),
-            color = when {
-                isSelected -> Color.White // 选中时文字变白
-                isCurrentMonth -> Color.Black
-                else -> Color.LightGray
-            },
-            fontSize = 14.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // 1. 日期数字
+            Text(
+                text = date.dayOfMonth.toString(),
+                color = when {
+                    isSelected -> Color(0xFF6200EE)
+                    isCurrentMonth -> Color.Black
+                    else -> Color.LightGray
+                },
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+
+            // 2. 下方的小圆圈或数字标记
+            if (taskColors.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (taskColors.size <= 3) {
+                        // 任务 <= 3：显示所有圆圈
+                        taskColors.forEach { colorInt ->
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(Color(colorInt), shape = CircleShape)
+                            )
+                        }
+                    } else {
+                        // 任务 > 3：显示前 3 个 + 剩余数量
+                        taskColors.take(3).forEach { colorInt ->
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(Color(colorInt), shape = CircleShape)
+                            )
+                        }
+                        Text(
+                            text = "+${taskColors.size - 3}",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -97,4 +98,42 @@ class DogViewModel(private val repository: DogRepository) : ViewModel() {
     fun onDateClick(date: java.time.LocalDate) {
         _selectedDate.value = date.toString()
     }
+
+    // 1. 获取所有标签（已在 repository 中定义）
+    // 2. 获取当月所有记录，并将其与标签颜色匹配
+    // 我们创建一个映射：日期 -> 颜色列表
+    val dateToColors: StateFlow<Map<String, List<Int>>> = repository.allTags
+        .combine(_currentMonth) { tags, month ->
+            // 这里我们简化处理：观察所有记录并过滤（为了性能，实际项目会按月查询）
+            // 目前先实现逻辑：
+            tags to month
+        }.combine(repository.getLogsForDate("")) { (tags, month), _ ->
+            // 注意：由于你的 Dao 目前只能查单日，为了日历标记，
+            // 建议后续在 DogDao 增加一个 getLogsByMonth 的方法。
+            // 这里我们先用一种通用的逻辑展示如何转换数据：
+            emptyMap<String, List<Int>>()
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    // 提示：为了让日历流畅，我们需要一个能获取“所有记录”的流
+    // 请在 DogDao 中添加：@Query("SELECT * FROM logs") fun getAllLogs(): Flow<List<DogLog>>
+
+    // 优化后的逻辑（假设你已添加 getAllLogs）：
+// 建议放在 selectedDate 下方
+    val calendarMarkings: StateFlow<Map<String, List<Int>>> = combine(
+        repository.allLogs,
+        repository.allTags
+    ) { logs, tags ->
+        // 建立一个 tagId 到 ColorInt 的快速查找表
+        val tagColorMap = tags.associate { it.id to it.color }
+
+        // 按日期分组，并将 tagId 转换为颜色值
+        logs.groupBy { it.date }
+            .mapValues { entry ->
+                entry.value.mapNotNull { log -> tagColorMap[log.tagId] }
+            }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
 }

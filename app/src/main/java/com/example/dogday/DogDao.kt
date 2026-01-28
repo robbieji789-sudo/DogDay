@@ -9,6 +9,9 @@ interface DogDao {
     @Query("SELECT * FROM tags ORDER BY orderIndex ASC")
     fun getAllTags(): Flow<List<Tag>>
 
+    @Query("SELECT * FROM logs")
+    fun getAllLogs(): Flow<List<DogLog>>
+
     // 获取某天的所有记录
     @Query("SELECT * FROM logs WHERE date = :selectedDate")
     fun getLogsByDate(selectedDate: String): Flow<List<DogLog>>

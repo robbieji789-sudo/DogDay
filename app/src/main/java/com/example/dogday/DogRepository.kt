@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 class DogRepository(private val dogDao: DogDao) {
     val allTags: Flow<List<Tag>> = dogDao.getAllTags()
 
+    val allLogs: Flow<List<DogLog>> = dogDao.getAllLogs()
+
     fun getLogsForDate(date: String): Flow<List<DogLog>> = dogDao.getLogsByDate(date)
 
     suspend fun insertLog(log: DogLog) = dogDao.insertLog(log)
